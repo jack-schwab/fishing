@@ -1,0 +1,68 @@
+#include <WiFi.h>
+#include <WebSocketsServer.h>
+
+// Wi-Fi credentials
+const char* ssid = "MAKERSPACE";
+const char* password = "12345678";
+
+// WebSocket server on port 80
+WebSocketsServer webSocket = WebSocketsServer(80);
+
+// Hall effect sensor configuration
+const int hallPin = 14;   // GPIO pin connected to AH1815 output
+volatile int rotationCount = 0; // Counter for crank rotations
+
+// Debounce timer for Hall effect sensor
+volatile unsigned long lastInterruptTime = 0;
+const unsigned long debounceDelay = 60; // Minimum delay time in milliseconds between pulses
+
+// Interrupt Service Routine to count rotations
+void IRAM_ATTR countRotation() {
+    unsigned long interruptTime = millis();
+
+    // If interrupts come faster than debounceDelay, ignore as noise
+    if (interruptTime - lastInterruptTime > debounceDelay) {
+        rotationCount++; // Increment rotation count
+    }
+    lastInterruptTime = interruptTime;
+}
+
+// WebSocket event handler
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+    if (type == WStype_TEXT) {
+        webSocket.sendTXT(num, "Acknowledged!");
+    }
+}
+
+void setup() {
+    Serial.begin(921600);
+
+    // Setup Hall effect sensor
+    pinMode(hallPin, INPUT_PULLUP); // Use internal pull-up resistor to stabilize the signal
+    attachInterrupt(digitalPinToInterrupt(hallPin), countRotation, FALLING); // Trigger on FALLING edge
+
+    // Connect to Wi-Fi
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+    }
+
+    // Start WebSocket server
+    webSocket.begin();
+    webSocket.onEvent(webSocketEvent);
+}
+
+void loop() {
+    // Handle WebSocket communication
+    webSocket.loop();
+
+    // Send rotation count to all connected clients every 500ms
+    static unsigned long lastSendTime = 0;
+    if (millis() - lastSendTime > 500) {
+        lastSendTime = millis();
+
+        // Prepare rotation count as a String
+        String message = String(rotationCount);
+        webSocket.broadcastTXT(message);
+    }
+}

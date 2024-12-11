@@ -1,44 +1,16 @@
 body {
-    text-align: center;
     font-family: Arial, sans-serif;
-    background-color: #b3d9ff;
-    margin: 0;
+    text-align: center;
+    background-color: #87CEEB;
 }
 
 canvas {
     display: block;
-    margin: 0 auto;
+    margin: 20px auto;
+    background-color: #1E90FF;
     border: 2px solid #000;
-    background: linear-gradient(to bottom, #87CEEB, #4682B4); /* Sky to water */
 }
 
-h1 {
-    margin-top: 10px;
-    font-size: 2em;
-}
-
-p {
-    font-size: 1.2em;
-    margin: 10px 0;
-}
-
-button {
-    font-size: 1.2em;
-    padding: 10px 20px;
-    margin-top: 20px;
-    cursor: pointer;
-    background-color: #007ACC;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    box-shadow: 0 4px #005a9c;
-}
-
-button:hover {
-    background-color: #005a9c;
-}
-
-button:active {
-    background-color: #004d80;
-    box-shadow: none;
+#status {
+    font-weight: bold;
 }
