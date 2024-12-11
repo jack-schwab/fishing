@@ -4,15 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fishing Game</title>
-    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Fishing Game</h1>
-<p>Status: <span id="status">Disconnected</span></p>
-<p>Rotations: <span id="rotations">0</span></p>
-<p>Target Cranks: <span id="targetCranks">0</span></p>
-<p id="gameMessage">Start cranking to catch the fish!</p>
-<canvas id="gameCanvas" width="800" height="600"></canvas>
+<div id="game-container">
+    <h1 class="game-title">Fishing Adventure</h1>
+    <p>Status: <span id="status">Disconnected</span></p>
+    <p>Rotations: <span id="rotations">0</span></p>
+    <p>Target Cranks: <span id="targetCranks">0</span></p>
+    <p id="gameMessage">Reel in the fish by cranking!</p>
+    <div id="phaser-game"></div>
+</div>
 <script src="script.js"></script>
 </body>
 </html>

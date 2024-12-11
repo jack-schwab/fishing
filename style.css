@@ -1,16 +1,36 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Comic Sans MS', sans-serif;
+    background-color: #ADD8E6;
+    margin: 0;
+    padding: 0;
     text-align: center;
-    background-color: #87CEEB;
 }
 
-canvas {
-    display: block;
-    margin: 20px auto;
+#game-container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    background: #FFF;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.game-title {
+    font-size: 36px;
+    color: #2E8B57;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+#phaser-game {
+    width: 800px;
+    height: 600px;
+    margin: auto;
+    border: 5px solid #000;
     background-color: #1E90FF;
-    border: 2px solid #000;
 }
 
-#status {
-    font-weight: bold;
+#status, #rotations, #targetCranks, #gameMessage {
+    font-size: 20px;
+    color: #333;
 }

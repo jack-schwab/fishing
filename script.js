@@ -2,112 +2,119 @@ const statusElement = document.getElementById('status');
 const rotationsElement = document.getElementById('rotations');
 const targetCranksElement = document.getElementById('targetCranks');
 const gameMessageElement = document.getElementById('gameMessage');
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
 
-// Game state
 let rotationCount = 0;
-let currentFish = null;
-const fisherman = { x: 375, y: 500, width: 50, height: 50 };
+let targetCranks = 10;
+let fishCaught = false;
+let fish;
 
-// Fish class
-class Fish {
-    constructor(x, y, size, requiredRotations) {
-        this.x = x;
-        this.y = y;
-        this.size = size;
-        this.requiredRotations = requiredRotations;
-        this.caught = false;
-    }
-
-    draw() {
-        if (!this.caught) {
-            ctx.fillStyle = "orange";
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.closePath();
+// Phaser game configuration
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    parent: 'phaser-game',
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
         }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
     }
+};
+
+const game = new Phaser.Game(config);
+
+function preload() {
+    // No external assets needed for drawing graphics
 }
 
-// Spawn a fish
-function spawnFish() {
-    const x = Math.random() * (canvas.width - 50) + 25;
-    const y = Math.random() * (canvas.height / 2) + 50;
-    const size = Math.random() * 20 + 10;
-    const requiredRotations = Math.floor(size / 5);
-    currentFish = new Fish(x, y, size, requiredRotations);
-    targetCranksElement.textContent = requiredRotations;
-    gameMessageElement.textContent = `Catch the fish! Crank ${requiredRotations} times!`;
-    rotationCount = 0; // Reset crank count for the new fish
+function create() {
+    const graphics = this.add.graphics();
+
+    // Draw water (background)
+    graphics.fillStyle(0x1e90ff, 1); // Blue color
+    graphics.fillRect(0, 0, 800, 600);
+
+    // Draw dock
+    graphics.fillStyle(0x8b4513, 1); // Brown color
+    graphics.fillRect(300, 500, 200, 50); // Dock base
+    graphics.fillRect(370, 550, 60, 50); // Dock support
+
+    // Draw fisherman
+    this.add.rectangle(400, 460, 40, 80, 0xffd700); // Yellow body
+    this.add.circle(400, 420, 20, 0xffdab9); // Head
+
+    // Draw fish
+    fish = this.add.ellipse(
+        Phaser.Math.Between(100, 700),
+        Phaser.Math.Between(200, 400),
+        80,
+        40,
+        0x4682b4
+    );
+    fish.setInteractive();
+
+    // Text for cranks
+    this.add.text(20, 20, `Target Cranks: ${targetCranks}`, {
+        font: '20px Arial',
+        fill: '#FFFFFF'
+    });
+
+    // Listen for WebSocket messages
+    const socket = new WebSocket('ws://192.168.0.222/ws');
+
+    socket.onopen = () => {
+        statusElement.textContent = 'Connected';
+    };
+
+    socket.onmessage = (event) => {
+        rotationCount = parseInt(event.data, 10);
+        rotationsElement.textContent = rotationCount;
+
+        if (!fishCaught && rotationCount >= targetCranks) {
+            fishCaught = true;
+            socket.send("RESET");
+            gameMessageElement.textContent = "Fish caught! Spawning a new fish...";
+
+            // Reset fish and cranks after delay
+            this.time.delayedCall(2000, () => {
+                spawnFish(this);
+            });
+        }
+    };
+
+    socket.onclose = () => {
+        statusElement.textContent = 'Disconnected';
+    };
+
+    socket.onerror = (error) => {
+        statusElement.textContent = 'Error';
+    };
+
+    // Initial fish spawn
+    spawnFish(this);
+}
+
+function spawnFish(scene) {
+    fishCaught = false;
+    targetCranks = Math.floor(Math.random() * 20) + 5;
+    rotationCount = 0;
+    targetCranksElement.textContent = targetCranks;
     rotationsElement.textContent = rotationCount;
+    fish.setPosition(Phaser.Math.Between(100, 700), Phaser.Math.Between(200, 400));
+    fish.setFillStyle(0x4682b4); // Reset fish color
 }
 
-// Draw the fisherman
-function drawFisherman() {
-    ctx.fillStyle = "brown";
-    ctx.fillRect(fisherman.x, fisherman.y, fisherman.width, fisherman.height);
-    ctx.fillStyle = "black";
-    ctx.fillRect(fisherman.x + 20, fisherman.y - 100, 10, 100); // fishing rod
-}
-
-// Update game logic
-function updateGame() {
-    if (currentFish && !currentFish.caught && rotationCount >= currentFish.requiredRotations) {
-        currentFish.caught = true; // Mark the fish as caught
-        currentFish = null; // Clear the current fish
-
-        // Send a reset signal to the Arduino
-        socket.send("RESET");
-
-        // Notify the user and prepare for the next fish
-        gameMessageElement.textContent = "Fish caught! Spawning a new fish...";
-        setTimeout(spawnFish, 2000); // Spawn a new fish after 2 seconds
+function update() {
+    if (fishCaught) {
+        fish.setFillStyle(0xff0000); // Change fish color when caught
+    } else {
+        fish.setFillStyle(0x4682b4);
     }
 }
-
-
-// Render game
-function renderGame() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawFisherman();
-    if (currentFish) {
-        currentFish.draw();
-    }
-}
-
-// Game loop
-function gameLoop() {
-    updateGame();
-    renderGame();
-    requestAnimationFrame(gameLoop);
-}
-
-// WebSocket setup
-const socket = new WebSocket('ws://192.168.0.222/ws'); // Use your ESP32's IP
-
-socket.onopen = () => {
-    console.log('WebSocket connection opened');
-    statusElement.textContent = 'Connected';
-};
-
-socket.onmessage = (event) => {
-    rotationCount = parseInt(event.data, 10);
-    console.log(`Rotations: ${rotationCount}`);
-    rotationsElement.textContent = rotationCount;
-};
-
-socket.onclose = () => {
-    console.log('WebSocket connection closed');
-    statusElement.textContent = 'Disconnected';
-};
-
-socket.onerror = (error) => {
-    console.error('WebSocket error:', error);
-    statusElement.textContent = 'Error';
-};
-
-// Start the game loop
-spawnFish();
-requestAnimationFrame(gameLoop);

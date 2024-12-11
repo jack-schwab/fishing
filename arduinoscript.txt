@@ -30,6 +30,13 @@ void IRAM_ATTR countRotation() {
 // WebSocket event handler
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
     if (type == WStype_TEXT) {
+        String message = String((char *)payload).substring(0, length);
+
+        // If the client sends "RESET", reset the rotation count
+        if (message == "RESET") {
+            rotationCount = 0; // Reset rotation count
+        }
+
         webSocket.sendTXT(num, "Acknowledged!");
     }
 }
