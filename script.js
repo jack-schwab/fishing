@@ -60,12 +60,6 @@ function create() {
     );
     fish.setInteractive();
 
-    // Text for cranks
-    this.add.text(20, 20, `Target Cranks: ${targetCranks}`, {
-        font: '20px Arial',
-        fill: '#FFFFFF'
-    });
-
     // Listen for WebSocket messages
     const socket = new WebSocket('ws://192.168.0.222/ws');
 
